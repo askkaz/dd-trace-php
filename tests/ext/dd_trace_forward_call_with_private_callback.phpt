@@ -1,5 +1,7 @@
 --TEST--
 A private method can be used as callback with dd_trace_forward_call()
+--SKIPIF--
+<?php if (PHP_VERSION_ID >= 50500 && PHP_VERSION_ID < 70000) die("skip: requires dd_trace support"); ?>
 --FILE--
 <?php
 

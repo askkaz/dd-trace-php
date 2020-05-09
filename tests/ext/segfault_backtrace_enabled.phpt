@@ -2,6 +2,7 @@
 Dump backtrace when segmentation fault signal is raised and config enables it
 --SKIPIF--
 <?php
+if (PHP_VERSION_ID >= 50500 && PHP_VERSION_ID < 70000) die("skip: requires dd_trace support");
 preg_match("/alpine/i", file_get_contents("/etc/os-release")) and die("skip Unsupported LIBC");
 if (getenv('SKIP_ASAN')) die("skip: intentionally causes segfaults");
 ?>

@@ -1,5 +1,7 @@
 --TEST--
 dd_trace_tracer_is_limited() limits the tracer with a hard span limit
+--SKIPIF--
+<?php if (PHP_VERSION_ID >= 50500 && PHP_VERSION_ID < 70000) die("skip: requires dd_trace support"); ?>
 --ENV--
 DD_TRACE_SPANS_LIMIT=1000
 --FILE--

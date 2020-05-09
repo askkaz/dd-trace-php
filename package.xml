@@ -92,6 +92,7 @@
                         <file name="blacklist.c" role="src" />
                         <file name="dispatch.c" role="src" />
                         <file name="engine_hooks.c" role="src" />
+                        <file name="engine_hooks_5_4.c" role="src" />
                         <file name="handlers_curl.c" role="src" />
                     </dir>
                     <dir name="php7">
@@ -181,7 +182,6 @@
                         <file name="exception_handled_in_correct_catch_frame.phpt" role="test" />
                         <file name="exception_handled_in_multicatch.phpt" role="test" />
                         <file name="exception_handled_with_finally.phpt" role="test" />
-                        <file name="exception_handling_php5.phpt" role="test" />
                         <file name="exception_handling.phpt" role="test" />
                         <file name="exception_is_defined.phpt" role="test" />
                         <file name="exceptions_and_errors_are_ignored_in_tracing_closure.phpt" role="test" />

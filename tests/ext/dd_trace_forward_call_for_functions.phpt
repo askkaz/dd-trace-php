@@ -1,5 +1,7 @@
 --TEST--
 The original function call is invoked from the closure
+--SKIPIF--
+<?php if (PHP_VERSION_ID >= 50500 && PHP_VERSION_ID < 70000) die("skip: requires dd_trace support"); ?>
 --FILE--
 <?php
 function doStuff($foo, array $bar = [])

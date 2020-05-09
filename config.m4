@@ -58,9 +58,20 @@ if test "$PHP_DDTRACE" != "no"; then
       src/ext/php5/auto_flush.c \
       src/ext/php5/blacklist.c \
       src/ext/php5/dispatch.c \
-      src/ext/php5/engine_hooks.c \
       src/ext/php5/handlers_curl.c \
     "
+
+    if test $PHP_VERSION -lt 50500; then
+        DD_TRACE_PHP_VERSION_SPECIFIC_SOURCES="\
+          $DD_TRACE_PHP_VERSION_SPECIFIC_SOURCES \
+          src/ext/php5/engine_hooks_5_4.c \
+        "
+    else
+      DD_TRACE_PHP_VERSION_SPECIFIC_SOURCES="\
+        $DD_TRACE_PHP_VERSION_SPECIFIC_SOURCES \
+        src/ext/php5/engine_hooks.c \
+      "
+    fi
   elif test $PHP_VERSION -lt 80000; then
     DD_TRACE_PHP_VERSION_SPECIFIC_SOURCES="\
       src/ext/php7/auto_flush.c \
