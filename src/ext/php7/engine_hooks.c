@@ -612,7 +612,7 @@ static int _dd_legacy_fcall_helper(zend_execute_data *execute_data, ddtrace_disp
 }
 
 /*
-We check that the opcode from the opline matches the one we expect in the handler becuase a
+We check that the opcode from the opline matches the one we expect in the handler because a
 neighboring extension could have incremented the opline before forwarding the handler to us.
 */
 static int _dd_do_icall_handler(zend_execute_data *execute_data) {
@@ -641,7 +641,7 @@ static int _dd_do_ucall_handler(zend_execute_data *execute_data) {
     return _prev_ucall_handler ? _prev_ucall_handler(execute_data) : ZEND_USER_OPCODE_DISPATCH;
 }
 
-static int _dd_do_fcall_handler(zend_execute_data *execute_data) {
+static int _dd_do_fcall_legacy_handler(zend_execute_data *execute_data) {
     ddtrace_dispatch_t *dispatch = NULL;
     if (ZEND_DO_FCALL != EX(opline)->opcode || !EX(call)->func ||
         !_dd_should_trace_call(EX(call), EX(call)->func, &dispatch)) {
@@ -654,10 +654,36 @@ static int _dd_do_fcall_handler(zend_execute_data *execute_data) {
     return _prev_fcall_handler ? _prev_fcall_handler(execute_data) : ZEND_USER_OPCODE_DISPATCH;
 }
 
-static int _dd_do_fcall_by_name_handler(zend_execute_data *execute_data) {
+static int _dd_do_fcall_handler(zend_execute_data *execute_data) {
+    ddtrace_dispatch_t *dispatch = NULL;
+    if (ZEND_DO_FCALL != EX(opline)->opcode || !EX(call)->func || EX(call)->func->type == ZEND_INTERNAL_FUNCTION ||
+        !_dd_should_trace_call(EX(call), EX(call)->func, &dispatch)) {
+        return _prev_fcall_handler ? _prev_fcall_handler(execute_data) : ZEND_USER_OPCODE_DISPATCH;
+    }
+    if (dispatch->options & DDTRACE_DISPATCH_INNERHOOK) {
+        return _dd_legacy_fcall_helper(execute_data, dispatch);
+    }
+    _dd_fcall_helper(EX(call), dispatch);
+    return _prev_fcall_handler ? _prev_fcall_handler(execute_data) : ZEND_USER_OPCODE_DISPATCH;
+}
+
+static int _dd_do_fcall_by_name_legacy_handler(zend_execute_data *execute_data) {
     ddtrace_dispatch_t *dispatch = NULL;
     if (ZEND_DO_FCALL_BY_NAME != EX(opline)->opcode || !EX(call)->func ||
         !_dd_should_trace_call(EX(call), EX(call)->func, &dispatch)) {
+        return _prev_fcall_by_name_handler ? _prev_fcall_by_name_handler(execute_data) : ZEND_USER_OPCODE_DISPATCH;
+    }
+    if (dispatch->options & DDTRACE_DISPATCH_INNERHOOK) {
+        return _dd_legacy_fcall_helper(execute_data, dispatch);
+    }
+    _dd_fcall_helper(EX(call), dispatch);
+    return _prev_fcall_by_name_handler ? _prev_fcall_by_name_handler(execute_data) : ZEND_USER_OPCODE_DISPATCH;
+}
+
+static int _dd_do_fcall_by_name_handler(zend_execute_data *execute_data) {
+    ddtrace_dispatch_t *dispatch = NULL;
+    if (ZEND_DO_FCALL_BY_NAME != EX(opline)->opcode || !EX(call)->func ||
+        EX(call)->func->type == ZEND_INTERNAL_FUNCTION || !_dd_should_trace_call(EX(call), EX(call)->func, &dispatch)) {
         return _prev_fcall_by_name_handler ? _prev_fcall_by_name_handler(execute_data) : ZEND_USER_OPCODE_DISPATCH;
     }
     if (dispatch->options & DDTRACE_DISPATCH_INNERHOOK) {
@@ -897,10 +923,13 @@ void ddtrace_opcode_minit(void) {
     if (!get_dd_trace_sandbox_enabled()) {
         _prev_icall_handler = zend_get_user_opcode_handler(ZEND_DO_ICALL);
         zend_set_user_opcode_handler(ZEND_DO_ICALL, _dd_do_icall_handler);
+        zend_set_user_opcode_handler(ZEND_DO_FCALL, _dd_do_fcall_legacy_handler);
+        zend_set_user_opcode_handler(ZEND_DO_FCALL_BY_NAME, _dd_do_fcall_by_name_legacy_handler);
+    } else {
+        zend_set_user_opcode_handler(ZEND_DO_FCALL, _dd_do_fcall_handler);
+        zend_set_user_opcode_handler(ZEND_DO_FCALL_BY_NAME, _dd_do_fcall_by_name_handler);
     }
     zend_set_user_opcode_handler(ZEND_DO_UCALL, _dd_do_ucall_handler);
-    zend_set_user_opcode_handler(ZEND_DO_FCALL, _dd_do_fcall_handler);
-    zend_set_user_opcode_handler(ZEND_DO_FCALL_BY_NAME, _dd_do_fcall_by_name_handler);
 
     _prev_return_handler = zend_get_user_opcode_handler(ZEND_RETURN);
     zend_set_user_opcode_handler(ZEND_RETURN, _dd_return_handler);

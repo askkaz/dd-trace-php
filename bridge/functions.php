@@ -88,7 +88,8 @@ function dd_wrap_autoloader()
     });
 
     // User app is not using any autoloader we just import the initialization script
-    if (dd_env_as_boolean('DD_TRACE_NO_AUTOLOADER', false)) {
+    $default = dd_env_as_boolean('DD_TRACE_SANDBOX_ENABLED', \PHP_VERSION_ID >= 50500);
+    if (dd_env_as_boolean('DD_TRACE_NO_AUTOLOADER', $default)) {
         require __DIR__ . '/dd_init.php';
         return;
     }
