@@ -29,6 +29,7 @@ typedef struct _ddtrace_original_context {
 ZEND_BEGIN_MODULE_GLOBALS(ddtrace)
 zend_bool disable;
 zend_bool disable_in_current_request;
+char *traced_internal_functions;
 char *request_init_hook;
 zend_bool strict_mode;
 

@@ -31,7 +31,7 @@
 #include "dispatch.h"
 #include "dogstatsd_client.h"
 #include "engine_hooks.h"
-#include "handlers_curl.h"
+#include "handlers_internal.h"
 #include "logging.h"
 #include "memory_limit.h"
 #include "random.h"
@@ -47,6 +47,8 @@ ZEND_DECLARE_MODULE_GLOBALS(ddtrace)
 PHP_INI_BEGIN()
 STD_PHP_INI_BOOLEAN("ddtrace.disable", "0", PHP_INI_SYSTEM, OnUpdateBool, disable, zend_ddtrace_globals,
                     ddtrace_globals)
+STD_PHP_INI_ENTRY("ddtrace.traced_internal_functions", "", PHP_INI_SYSTEM, OnUpdateString, traced_internal_functions,
+                  zend_ddtrace_globals, ddtrace_globals)
 STD_PHP_INI_ENTRY("ddtrace.request_init_hook", "", PHP_INI_SYSTEM, OnUpdateString, request_init_hook,
                   zend_ddtrace_globals, ddtrace_globals)
 STD_PHP_INI_BOOLEAN("ddtrace.strict_mode", "0", PHP_INI_SYSTEM, OnUpdateBool, strict_mode, zend_ddtrace_globals,
@@ -61,13 +63,15 @@ static int ddtrace_startup(struct _zend_extension *extension) {
 #endif
 
     ddtrace_blacklist_startup();
-    ddtrace_curl_handlers_startup();
+    ddtrace_internal_handlers_startup();
     return SUCCESS;
 }
 
 static void ddtrace_shutdown(struct _zend_extension *extension) {
     PHP5_UNUSED(extension);
     PHP7_UNUSED(extension);
+
+    ddtrace_internal_handlers_shutdown();
 }
 
 static void ddtrace_activate(void) {}
@@ -359,7 +363,7 @@ static PHP_RSHUTDOWN_FUNCTION(ddtrace) {
         return SUCCESS;
     }
 
-    ddtrace_curl_handlers_rshutdown();
+    ddtrace_internal_handlers_rshutdown();
     ddtrace_dogstatsd_client_rshutdown(TSRMLS_C);
 
     ddtrace_dispatch_destroy(TSRMLS_C);
